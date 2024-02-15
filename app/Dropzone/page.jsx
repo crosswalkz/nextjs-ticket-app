@@ -12,25 +12,56 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 
 const Dropzone = ({ className }) => {
-  const [files, setFiles] = useState([])
-  const [rejected, setRejected] = useState([])
+  // const [files, setFiles] = useState([])
+  // const [rejected, setRejected] = useState([])
   const [demo , setDemo] = useState({
     demo_file:[],
     demo_rejected_file:[]
   })
+  useEffect(()=>{
+    // console.log("files" , files);
+    console.log("demo.demo_file:" , demo.demo_file);
+    // console.log("rejected files" , rejected);
+    console.log("demo.demo_rejected_file" , demo.demo_rejected_file);
+  } ,[demo])
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     if (acceptedFiles?.length) {
-      setFiles(previousFiles => [
-        ...previousFiles,
-        ...acceptedFiles.map(file =>
-          Object.assign(file, { preview: URL.createObjectURL(file) })
-        )
-      ])
+      console.log("inside the acceptedfiles");
+      // setFiles(previousFiles => [
+      //   ...previousFiles,
+      //   ...acceptedFiles.map(file =>
+      //     Object.assign(file, { preview: URL.createObjectURL(file) })
+      //   )
+      // ])
+     
+
+      setDemo(previousDemo => ({
+        ...previousDemo,
+        demo_file: [
+          ...previousDemo.demo_file,
+          ...acceptedFiles.map(file =>
+            Object.assign(file, { preview: URL.createObjectURL(file) })
+          )
+        ]
+      }))
+      // console.log("demo files:",demo);
+      
+      
     }
 
     if (rejectedFiles?.length) {
-      setRejected(previousFiles => [...previousFiles, ...rejectedFiles])
+      // setRejected(previousFiles => [...previousFiles, ...rejectedFiles])
+      setDemo(previousDemo => ({
+        ...previousDemo,
+        demo_rejected_file: [
+          ...previousDemo.demo_rejected_file,
+          ...rejectedFiles
+        ]
+      }));
+ 
+
+
     }
   }, [])
 
@@ -42,44 +73,39 @@ const Dropzone = ({ className }) => {
     onDrop
   })
 
-  useEffect(() => {
-    // Revoke the data uris to avoid memory leaks
-    return () => files.forEach(file => URL.revokeObjectURL(file.preview))
-  }, [files])
+  // useEffect(() => {
+  //   // Revoke the data uris to avoid memory leaks
+  //   return () => demo.demo_file.forEach(file => URL.revokeObjectURL(file.preview))
+  // }, [demo.demo_file])
 
   const removeFile = name => {
-    setFiles(files => files.filter(file => file.name !== name))
+    // setFiles(files => files.filter(file => file.name !== name))
+    setDemo(previousDemo => ({
+      ...previousDemo,
+      demo_file: previousDemo.demo_file.filter(file => file.name !== name)
+    }));
   }
 
   const removeAll = () => {
-    setFiles([])
-    setRejected([])
+    // setFiles([])
+    // setRejected([])
+    setDemo(previousDemo => ({
+      demo_file: [],
+      demo_rejected_file: []
+    }));
   }
 
   const removeRejected = name => {
-    setRejected(files => files.filter(({ file }) => file.name !== name))
+    // setRejected(files => files.filter(({ file }) => file.name !== name))
+    setDemo(previousDemo => ({
+      ...previousDemo,
+      demo_rejected_file: previousDemo.demo_rejected_file.filter(({file}) => file.name !== name)
+    }));
   }
 
-  const handleSubmit = async e => {
-    e.preventDefault()
-
-    if (!files?.length) return
-
-    const formData = new FormData()
-    files.forEach(file => formData.append('file', file))
-    formData.append('upload_preset', 'friendsbook')
-
-    const URL = process.env.NEXT_PUBLIC_CLOUDINARY_URL
-    const data = await fetch(URL, {
-      method: 'POST',
-      body: formData
-    }).then(res => res.json())
-
-    console.log(data)
-  }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form>
       <div
         {...getRootProps({
           className: className
@@ -115,8 +141,11 @@ const Dropzone = ({ className }) => {
           Accepted Files
         </h3>
         <ul className='mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-10'>
-          {files.map(file => (
+          {demo.demo_file.map(file => (
             <li key={file.name} className='relative h-32 rounded-md shadow-lg'>
+               {console.log("inside the map loop. Demo.demo_file:",demo.demo_file)}
+               {console.log("individual file:",file)}
+              
               <Image
                 src={file.preview}
                 alt={file.name}
@@ -147,7 +176,7 @@ const Dropzone = ({ className }) => {
           Rejected Files
         </h3>
         <ul className='mt-6 flex flex-col'>
-          {rejected.map(({ file, errors }) => (
+          {demo.demo_rejected_file.map(({ file, errors }) => (
             <li key={file.name} className='flex items-start justify-between'>
               <div>
                 <p className='mt-2 text-neutral-500 text-sm font-medium'>
